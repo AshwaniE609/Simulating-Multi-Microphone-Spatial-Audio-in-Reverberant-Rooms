@@ -76,9 +76,11 @@ Ensure MATLAB is installed with Array Toolbox and Audio Toolbox.
 Download Input Data
 Place clean speech files for "wearer" and "bystander" into input_audio/
 Place environmental noise files into noise_dataset/
+
+
 How to Use the Simulation
 1. Configuration
-Before running, open main_simulation.m and configure parameters:
+Before running, open main_simulation.m and configure parameters at the top:
 %% Microphone and Room Setup
 mic1pos = [0.05; 0; 0];
 mic2pos = [-0.05; 0; 0];
@@ -89,8 +91,8 @@ mics = [mic1pos, mic2pos, mic3pos, mic4pos];
 room_size = [5, 4, 6]; % [Length, Width, Height] in meters
 
 %% Source Positions
-radii = [1, 2, 3];          % Radii for bystander movement
-phi_angles = 0:20:360;      % Azimuth angles in degrees
+radii = [1, 2, 3];         % Radii for bystander movement
+phi_angles = 0:20:360;     % Azimuth angles in degrees
 
 %% Audio File Paths
 [wearer_audio, fs_wearer] = audioread('input_audio/1040-133433-0025.flac');
@@ -100,31 +102,28 @@ noise_folder = 'noise_dataset';   % Path to noise files
 
 %% Output Folder
 output_folder = 'final_noisy_outputs';
-Update file paths for your dataset.
+👉 Update file paths to match your dataset.
 2. Running the Script
-Open MATLAB.
-Navigate to the repository directory.
-Open main_simulation.m.
-Run:
+Open MATLAB
+Navigate to the repository directory
+Open main_simulation.m
+Run in the MATLAB Command Window:
 main_simulation
-The script processes all combinations of radii and angles, printing progress to the MATLAB Command Window.
+The script processes all combinations of radii and angles, printing progress in the Command Window.
 3. Understanding the Output
-The script creates an output folder (final_noisy_outputs by default) with:
-4 .wav files: One for each microphone channel.
-Naming Convention:
+The script creates an output folder (default: final_noisy_outputs/) with:
+4 .wav files → one for each microphone channel
+Format:
 Audio10_output_r<radius>_phi<angle>_theta0_mic<mic_index>.wav
 Example:
 Audio10_output_r2_phi100_theta0_mic3.wav
-1 .mat file: Contains a 4-channel matrix of final mixed/noisy audio.
-Naming Convention:
+1 .mat file → contains a 4-channel matrix of final mixed/noisy audio
+Format:
 Audio10_matrix_r<radius>_phi<angle>_theta0.mat
 Example:
 Audio10_matrix_r2_phi100_theta0.mat
 This structured output supports direct loading into analysis scripts or ML pipelines.
-
 Acknowledgments
-This work was conducted as part of the Undergraduate Project (UGP) at the
-Department of Electrical Engineering, IIT Kanpur,
-under the supervision of Prof. Rajesh M. Hegde.
+This work was conducted as part of the Undergraduate Project (UGP) at the Department of Electrical Engineering, IIT Kanpur, under the supervision of Prof. Rajesh M. Hegde.
 
-
+Would you like me to **add badges** (MATLAB version, License, Status) and an optional **Demo Audio Samples** section so your repo looks polished like a professional open-source project?
