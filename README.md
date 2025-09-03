@@ -81,27 +81,30 @@ Place environmental noise files into noise_dataset/
 How to Use the Simulation
 1. Configuration
 Before running, open main_simulation.m and configure parameters at the top:
-%% Microphone and Room Setup
-mic1pos = [0.05; 0; 0];
-mic2pos = [-0.05; 0; 0];
-mic3pos = [0.08; 0.45; 0.04];
-mic4pos = [-0.08; 0.45; 0.04];
-mics = [mic1pos, mic2pos, mic3pos, mic4pos];
 
-room_size = [5, 4, 6]; % [Length, Width, Height] in meters
+  %% Microphone and Room Setup
+  mic1pos = [0.05; 0; 0];
+  mic2pos = [-0.05; 0; 0];
+  mic3pos = [0.08; 0.45; 0.04];
+  mic4pos = [-0.08; 0.45; 0.04];
+  mics = [mic1pos, mic2pos, mic3pos, mic4pos];
+  
+  room_size = [5, 4, 6]; % [Length, Width, Height] in meters
+  
+  %% Source Positions
+  radii = [1, 2, 3];         % Radii for bystander movement
+  phi_angles = 0:20:360;     % Azimuth angles in degrees
+  
+  %% Audio File Paths
+  [wearer_audio, fs_wearer] = audioread('input_audio/1040-133433-0025.flac');
+  [bystander_audio, fs_bystander] = audioread('input_audio/1040-133433-0009.flac');
+  
+  noise_folder = 'noise_dataset';   % Path to noise files
+  
+  %% Output Folder
+  output_folder = 'final_noisy_outputs';
 
-%% Source Positions
-radii = [1, 2, 3];         % Radii for bystander movement
-phi_angles = 0:20:360;     % Azimuth angles in degrees
-
-%% Audio File Paths
-[wearer_audio, fs_wearer] = audioread('input_audio/1040-133433-0025.flac');
-[bystander_audio, fs_bystander] = audioread('input_audio/1040-133433-0009.flac');
-
-noise_folder = 'noise_dataset';   % Path to noise files
-
-%% Output Folder
-output_folder = 'final_noisy_outputs';
+  
 👉 Update file paths to match your dataset.
 2. Running the Script
 Open MATLAB
