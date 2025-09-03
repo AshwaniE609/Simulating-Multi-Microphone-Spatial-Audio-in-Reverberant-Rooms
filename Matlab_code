@@ -1,0 +1,501 @@
+clc;
+clearvars;
+%% Modified Room and Microphone Configuration
+mic1pos = [0.05; 0; 0]; % Positioned relative to center
+mic2pos = [-0.05; 0; 0]; % 10 cm right of mic1
+mic3pos = [0.08; 0.45; 0.04]; % Positioned relative to center
+mic4pos = [-0.08; 0.45; 0.04]; % Positioned relative to center
+mics = [mic1pos, mic2pos, mic3pos, mic4pos];
+%% Updated Room dimensions (centered at origin)
+room
+_
+size = [5, 4, 6]; % Maintain original room dimensions
+forv = [-room
+_
+size/2; room
+_
+size/2]'; % Symmetric around origin
+% Now spans from [-5,
+-5,
+-1.5] to [5,5,1.5]
+%% Modified Wearer Position (slightly offset from center)
+sigpos
+_
+wearer = [0; -0.06; 0]; % Maintain original offset from mic1
+%% Propagation properties
+c = 343; % Speed of sound in m/s
+dbd = 60; % Decibels down for cutoff
+fs = 16000; % Sampling frequency in Hz
+%% Define source positions
+radii = [1, 2, 3]; % Radii for bystander movement
+phi
+_
+angles = 0:20:360; % Azimuth angles for bystander movement
+theta = 0; % Constant elevation angle (horizontal plane)
+sigpos
+_
+wearer = [0; -0.06; 0]; % Wearer as speaker
+L
+_
+target = 640; % Desired impulse response length
+%% Load Wearer and Bystander Audio
+[wearer
+_
+audio, fs
+_
+wearer] = audioread('1040-133433-0025.flac');
+[bystander
+_
+audio, fs
+_
+bystander] = audioread('1040-133433-0009.flac');
+% Resample audio if needed
+if fs
+wearer ~= fs
+_
+wearer
+_
+audio = resample(wearer
+_
+audio, fs, fs
+_
+wearer);
+end
+if fs
+_
+bystander ~= fs
+bystander
+_
+audio = resample(bystander
+_
+audio, fs, fs
+_
+bystander);
+end
+noise
+%% Load Noise Files from Folder
+_
+folder = '/Users/ASHWANI/Downloads/FSDnoisy18k.audio
+_
+test'; % UPDATE THIS PATH
+noise
+_
+files = dir(fullfile(noise
+_
+folder,
+'*
+.wav')); % Add other extensions if needed
+% Check if noise files exist
+if isempty(noise
+_
+files)
+error('No noise files found in the specified folder.
+');
+end
+%% Create output folder
+output
+folder = 'final
+_
+_
+noisy_
+outputs';
+if ~isfolder(output
+_
+folder)
+mkdir(output
+_
+folder);
+end
+%% Set constant beta value
+beta = 0.5;
+bs = repmat(beta, 1, 6);
+%% Main processing loop
+for rIdx = 1:length(radii)
+r = radii(rIdx);
+for phi = phi
+_
+angles
+% Randomly select a noise file
+selected
+noise = noise
+_
+_
+files(randi(length(noise
+_
+files))).name;
+[noise
+_
+audio, fs
+_
+noise] = audioresample(fullfile(noise
+_
+folder, selected
+_
+noise), fs);
+[x, y, z] = sph2cart(deg2rad(phi), deg2rad(theta), r);
+sigpos
+_
+bystander = [x; y; z];
+% Generate wearer IR
+IR
+_
+wearer = zeros(4, L
+_
+target);
+for micIdx = 1:4
+currentMic = mics(:, micIdx);
+[dlays, scls] = imagesim(forv, sigpos
+_
+wearer, currentMic, bs, c, dbd);
+[impres,
+~] = roomimpres(dlays, scls, c, fs);
+impLen = size(impres,2);
+if impLen >= L
+_
+target
+impres
+_
+mod = impres(1, 1:L
+_
+target);
+else
+impres
+_
+mod = zeros(1, L
+_
+target);
+impres
+_
+mod(1:impLen) = impres(1, 1:impLen);
+end
+IR
+_
+wearer(micIdx, :) = impres
+_
+mod;
+end
+% Generate bystander IR
+IR
+_
+bystander = zeros(4, L
+_
+target);
+for micIdx = 1:4
+currentMic = mics(:, micIdx);
+[dlays, scls] = imagesim(forv, sigpos
+_
+bystander, currentMic, bs, c, dbd);
+[impres,
+~] = roomimpres(dlays, scls, c, fs);
+impLen = length(impres);
+if impLen >= L
+_
+target
+impres
+_
+mod = impres(1:L
+_
+target);
+else
+impres
+_
+mod = [impres(:); zeros(L
+_
+target - impLen, 1)];
+end
+IR
+_
+bystander(micIdx, :) = impres
+_
+mod';
+end
+% Normalize IRs before convolution
+ir
+_
+bystander = IR
+_
+bystander(micIdx, :) / max(abs(IR
+_
+bystander(micIdx, :)));
+ir
+wearer = IR
+_
+_
+wearer(micIdx, :) / max(abs(IR
+_
+wearer(micIdx, :)));
+final
+_
+noisy_
+audio = zeros(4, max([length(wearer
+_
+audio), length(bystander
+_
+length(noise
+_
+audio)]));
+audio),
+% Initialize convolution outputs
+convolved
+audio
+_
+_
+bystander = zeros(4, length(bystander
+_
+convolved
+audio
+_
+_
+wearer = zeros(4, length(wearer
+_
+audio));
+for micIdx = 1:4
+% Get correct impulse response for current microphone
+ir
+_
+bystander = IR
+_
+bystander(micIdx, :)';
+ir
+wearer = IR
+_
+_
+wearer(micIdx, :)';
+audio));
+% Perform 1D convolution
+convolved
+audio
+_
+_
+bystander(micIdx,:) = conv(bystander
+_
+audio, ir
+_
+bystander,
+convolved
+audio
+_
+_
+wearer(micIdx,:) = conv(wearer
+_
+audio, ir
+_
+wearer,
+'same');
+end
+% % Calculate energy compensation factor
+original
+_
+rms = rms(wearer
+_
+audio);
+convolved
+_
+rms = rms(convolved
+audio
+_
+_
+wearer);
+%
+%
+% % Element-wise division with broadcast scalar
+% % gain
+_
+factor = original
+_
+rms ./ (convolved
+_
+rms + eps);
+gain
+_
+factor = 10;
+%
+% % Apply gain to each microphone channel
+convolved
+audio
+wearer = convolved
+audio
+wearer .
+_
+_
+_
+_
+* gain
+_
+factor;
+convolved
+audio
+_
+_
+bystander = convolved
+audio
+_
+_
+bystander .
+* gain
+_
+factor;
+%
+max
+'same');
+% Ensure matching lengths
+_
+length = max([size(convolved
+audio
+_
+_
+bystander,2),
+size(convolved
+audio
+_
+_
+wearer,2),
+length(noise
+_
+audio)]);
+% Pad all signals to same length
+convolved
+audio
+_
+_
+bystander = padarray(convolved
+audio
+_
+_
+bystander, [0
+max
+_
+length-size(convolved
+audio
+_
+_
+bystander,2)], 0,
+'post');
+convolved
+audio
+_
+_
+wearer = padarray(convolved
+audio
+_
+_
+wearer, [0
+max
+_
+length-size(convolved
+audio
+_
+_
+wearer,2)], 0,
+'post');
+noise
+audio
+_
+_padded = padarray(noise
+_
+audio(:)'
+, [0 max
+_
+length-length(noise
+_
+audio)], 0,
+'post');
+% Add noise to final mixed audio
+noise
+_
+level = 0.0002;
+% final
+_
+noisy_
+audio(micIdx, :) = final
+mixed
+audio + noise
+level * noise
+audio
+_
+_
+_
+_
+_padded;
+% end
+% Create final mix
+final
+mixed
+audio = convolved
+audio
+_
+_
+_
+_
+bystander + convolved
+audio
+_
+_
+wearer;
+final
+_
+noisy_
+audio = final
+mixed
+audio + noise
+level * noise
+audio
+_
+_
+_
+_
+_padded;
+for micIdx = 1:4
+audiowrite(sprintf('%s/Audio10
+_
+output
+r%d
+_
+_phi%d
+theta0
+mic%d.wav'
+_
+_
+, output
+_
+micIdx), final
+_
+noisy_
+audio(micIdx, :), fs);
+end
+% Save the final noisy audio matrix
+save(sprintf('%s/Audio10
+matrix
+r%d
+_
+_
+_phi%d
+theta0.mat'
+_
+, output
+_
+folder, r, phi),
+'final
+_
+noisy_
+audio');
+fprintf('Processed r=%d, phi=%d° with noise: %s\n'
+, r, phi, selected
+_
+noise);
+end
+end
+disp('All combinations processed. Final noisy audio files and matrices saved successfully.
+');
+function [y, fs] = audioresample(filepath, target
+_
+fs)
+[y, fs] = audioread(filepath);
+if fs ~= target
+fs
+_
+y = resample(y, target
+_
+fs, fs);
+end
+end
